@@ -1,4 +1,4 @@
-import scrapy,json,re,time
+import scrapy,json,re,time,sys
 import scrapycrawler.spiders.req as req
 import pathlib,inspect
 
@@ -10,7 +10,13 @@ class MoiSpider(scrapy.spiders.CrawlSpider):
 
     name = 'moi'
     start_urls = [srcfileUrl]
-    custom_settings = {'ROBOTSTXT_OBEY':False}
+    custom_settings = {
+        'ROBOTSTXT_OBEY':False,
+        'CONCURRENT_ITEMS':5,
+        'CONCURRENT_REQUESTS':5,
+        'CONCURRENT_REQUESTS_PER_DOMAIN':5,
+        'DEPTH_LIMIT':999999999999999999999999,
+        }
 
     def __init__(self, *args, **kwargs):
         super(MoiSpider).__init__(*args, **kwargs)
@@ -42,7 +48,10 @@ class MoiSpider(scrapy.spiders.CrawlSpider):
         item = response.meta.get('meta')
         decisionContent = response.xpath('//*[@id="main_content"]/div/div/div[1]/div').extract()[0]
         decisionContent = req.parse_clean_and_split_decision_by_tag(decisionContent)
-        decisionContent = req.parse_decision(decisionContent)
+        #decisionContent = req.parse_decision(decisionContent)
+        #print("\n".join(decisionContent))
+        #sys.exit()
+        decisionContent = req.parse_with_regexp_on_whole_str("\n".join(decisionContent))
         decisionContent = {**decisionContent, **item}
         if isinstance(decisionContent,str): decisionContent = {'decisionContent':decisionContent}
         yield decisionContent
